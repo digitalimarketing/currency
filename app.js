@@ -1,13 +1,12 @@
 /*
-  On tap, fetches the raw HTML of each site through a public CORS proxy
-  (needed because Safari/iOS blocks direct cross-origin reads),
-  then extracts only the EUR line using a regex tuned to each page.
-
-  Public CORS proxies can go down or rate-limit; if a card fails,
-  try again in a few seconds or swap PROXY for another provider.
+  Uses allorigins.win (primary) and codetabs.com (fallback) as CORS proxies,
+  since corsproxy.io is unreliable/rate-limited for many users.
 */
 
-const PROXY = "https://corsproxy.io/?url=";
+const PROXIES = [
+  (url) => "https://api.allorigins.win/raw?url=" + encodeURIComponent(url),
+  (url) => "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(url),
+];
 
 const sources = {
   bonbast: {
@@ -49,14 +48,28 @@ function setState(card, text, kind) {
   if (kind) p.classList.add(kind);
 }
 
+async function tryFetch(targetUrl) {
+  let lastErr;
+  for (const buildProxyUrl of PROXIES) {
+    try {
+      const res = await fetch(buildProxyUrl(targetUrl), { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const text = await res.text();
+      if (text && text.length > 200) return text;
+      throw new Error("Empty response");
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error("All proxies failed");
+}
+
 async function checkOne(name) {
   const card = document.querySelector(`[data-source="${name}"]`);
   const cfg = sources[name];
   setState(card, "Checking...", "loading");
   try {
-    const res = await fetch(PROXY + encodeURIComponent(cfg.url), { cache: "no-store" });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const html = await res.text();
+    const html = await tryFetch(cfg.url);
     const price = cfg.parse(html);
     if (!price) throw new Error("Could not find EUR price on page");
     setState(card, price, null);
