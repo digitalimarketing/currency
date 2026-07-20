@@ -1,10 +1,10 @@
 const WORKER_URL = "https://currency.digitalimarketingchannel.workers.dev/";
 
-const sources = {
-  bonbast: { label: "Bonbast.com" },
-  bonbast2: { label: "Bon-bast.com" },
-  navasan: { label: "Navasan.net" },
-  tgju: { label: "TGJU.org" },
+const directLinks = {
+  bonbast: "https://bonbast.com/",
+  bonbast2: "https://www.bon-bast.com/",
+  navasan: "https://www.navasan.net/",
+  tgju: "https://www.tgju.org/currency",
 };
 
 function setState(card, text, kind) {
@@ -29,17 +29,10 @@ async function checkOne(name) {
   }
 }
 
-const directLinks = {
-  bonbast: "https://bonbast.com/",
-  bonbast2: "https://www.bon-bast.com/",
-  navasan: "https://www.navasan.net/",
-  tgju: "https://www.tgju.org/currency",
-};
-
 document.querySelectorAll(".card").forEach((card) => {
   card.addEventListener("click", () => checkOne(card.dataset.source));
 });
 
 document.getElementById("checkAllBtn").addEventListener("click", () => {
-  Object.keys(sources).forEach(checkOne);
+  Object.keys(directLinks).forEach(checkOne);
 });
