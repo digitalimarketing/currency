@@ -1,36 +1,10 @@
-const PROXIES = [
-  (url) => "https://r.jina.ai/" + url,
-];
+const WORKER_URL = "https://currency.digitalimarketingchannel.workers.dev/";
 
 const sources = {
-  bonbast: {
-    url: "https://bonbast.com/",
-    parse: (html) => {
-      const m = html.match(/Euro\/\s*IRR\s*\n*\s*([\d,]+)\s*Toman/i);
-      return m ? `${m[1]} Toman` : null;
-    }
-  },
-  bonbast2: {
-    url: "https://www.bon-bast.com/",
-    parse: (html) => {
-      const m = html.match(/EUR.*?Euro\s*\|\s*([\d,]+)\s*\|\s*([\d,]+)/i);
-      return m ? `${m[1]} / ${m[2]} Toman (sell/buy)` : null;
-    }
-  },
-  navasan: {
-    url: "https://www.navasan.net/",
-    parse: (html) => {
-      const m = html.match(/یورو\]\([^)]+\)\s*\|\s*([\d.]+)/);
-      return m ? `${m[1]} Toman` : null;
-    }
-  },
-  tgju: {
-    url: "https://www.tgju.org/currency",
-    parse: (html) => {
-      const m = html.match(/یورو[\s\S]{0,300}?([\d,]{5,7})/);
-      return m ? `${m[1]} Toman` : null;
-    }
-  }
+  bonbast: { label: "Bonbast.com" },
+  bonbast2: { label: "Bon-bast.com" },
+  navasan: { label: "Navasan.net" },
+  tgju: { label: "TGJU.org" },
 };
 
 function setState(card, text, kind) {
@@ -42,20 +16,25 @@ function setState(card, text, kind) {
 
 async function checkOne(name) {
   const card = document.querySelector(`[data-source="${name}"]`);
-  const cfg = sources[name];
   setState(card, "Checking...", "loading");
   try {
-    const res = await fetch("https://r.jina.ai/" + cfg.url, { cache: "no-store" });
+    const res = await fetch(`${WORKER_URL}?site=${name}`, { cache: "no-store" });
     if (!res.ok) throw new Error("HTTP " + res.status);
-    const html = await res.text();
-    const price = cfg.parse(html);
-    if (!price) throw new Error("Could not find EUR price");
-    setState(card, price, null);
+    const data = await res.json();
+    if (!data.price) throw new Error("No price found");
+    setState(card, data.price, null);
   } catch (e) {
     setState(card, "Failed: open site directly", "error");
-    card.onclick = () => window.open(cfg.url, "_blank");
+    card.onclick = () => window.open(directLinks[name], "_blank");
   }
 }
+
+const directLinks = {
+  bonbast: "https://bonbast.com/",
+  bonbast2: "https://www.bon-bast.com/",
+  navasan: "https://www.navasan.net/",
+  tgju: "https://www.tgju.org/currency",
+};
 
 document.querySelectorAll(".card").forEach((card) => {
   card.addEventListener("click", () => checkOne(card.dataset.source));
