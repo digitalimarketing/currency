@@ -17,6 +17,13 @@ function setState(card, text, kind) {
 async function checkOne(name) {
   const card = document.querySelector(`[data-source="${name}"]`);
   setState(card, "Checking...", "loading");
+
+  if (name !== "tgju") {
+    setState(card, "Tap to open site", null);
+    card.onclick = () => window.open(directLinks[name], "_blank");
+    return;
+  }
+
   try {
     const res = await fetch(`${WORKER_URL}?site=${name}`, { cache: "no-store" });
     if (!res.ok) throw new Error("HTTP " + res.status);
