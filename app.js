@@ -47,5 +47,18 @@ document.querySelectorAll(".card").forEach(card => {
   }); 
 });
 
+document.getElementById("loadAllBtn").addEventListener("click", () => {
+  ["bonbast", "bonbast2", "navasan"].forEach(site => {
+    const card = document.querySelector(`[data-source="${site}"]`);
+    const frameWrap = document.getElementById(`frame-${site}`);
+    if(!frameWrap.classList.contains("active")) {
+      frameWrap.classList.add("active");
+      setState(card, "Tap to close view", null);
+      const iframe = frameWrap.querySelector("iframe");
+      if(!iframe.src) iframe.src = directLinks[site];
+    }
+  });
+});
+
 // Auto-check TGJU on load
 checkTgju();
