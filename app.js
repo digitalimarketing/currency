@@ -1,27 +1,51 @@
-const SOURCES = {
+const WORKER_URL = "https://currency.digitalimarketingchannel.workers.dev/";
+
+const directLinks = {
   bonbast: "https://bonbast.com/",
   bonbast2: "https://www.bon-bast.com/",
   navasan: "https://www.navasan.net/",
   tgju: "https://www.tgju.org/currency",
 };
-const order = ["bonbast", "bonbast2", "navasan"];
-function setState(card, text){ card.querySelector(".price").textContent = text; }
-function openFocused(url, name){ const w = window.open(url, name); if(w) w.focus(); else alert("Allow pop-ups to open sites one by one."); return w; }
-document.querySelectorAll(".card").forEach(card => {
-  card.addEventListener("click", () => {
-    const site = card.dataset.source;
-    if(site === 'tgju') { openFocused(SOURCES.tgju, 'tgju'); setState(card, 'Opened in new tab'); return; }
-    openFocused(SOURCES[site], site);
-    setState(card, 'Opened and focused');
-  });
-});
-document.getElementById("checkAllBtn").addEventListener("click", () => {
-  let i = 0;
-  function next(){
-    if(i >= order.length) { openFocused(SOURCES.tgju, 'tgju'); return; }
-    openFocused(SOURCES[order[i]], order[i]);
-    i += 1;
-    setTimeout(next, 900);
+
+function setState(card, text, kind){ 
+  const p = card.querySelector(".price"); 
+  p.textContent = text; 
+  p.classList.remove("loading","error"); 
+  if(kind) p.classList.add(kind); 
+}
+
+async function checkTgju(){ 
+  const card = document.querySelector('[data-source="tgju"]'); 
+  setState(card, "Checking...", "loading"); 
+  try{ 
+    const res = await fetch(`${WORKER_URL}?site=tgju&t=${Date.now()}`, {cache:"no-store"}); 
+    const data = await res.json(); 
+    if(!data.price) throw new Error(data.error || "No price found"); 
+    setState(card, data.price, null); 
+  } catch(e){ 
+    setState(card, "Failed: open site directly", "error"); 
+    card.onclick = () => window.open(directLinks.tgju, "_blank"); 
   }
-  next();
+}
+
+document.querySelectorAll(".card").forEach(card => { 
+  card.addEventListener("click", () => { 
+    if(card.dataset.source === 'tgju') {
+      checkTgju(); 
+    } else { 
+      const frameWrap = document.getElementById(`frame-${card.dataset.source}`);
+      frameWrap.classList.toggle("active");
+
+      if(frameWrap.classList.contains("active")) {
+        setState(card, "Tap to close view", null);
+        const iframe = frameWrap.querySelector("iframe");
+        if(!iframe.src) iframe.src = directLinks[card.dataset.source];
+      } else {
+        setState(card, "Tap to view site inside app", null);
+      }
+    } 
+  }); 
 });
+
+// Auto-check TGJU on load
+checkTgju();
