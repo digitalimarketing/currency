@@ -10,7 +10,7 @@ const directLinks = {
 function setState(card, text, kind){ 
   const p = card.querySelector(".price"); 
   p.textContent = text; 
-  p.classList.remove("loading","error"); 
+  p.className = "price"; // reset
   if(kind) p.classList.add(kind); 
 }
 
@@ -21,9 +21,9 @@ async function checkTgju(){
     const res = await fetch(`${WORKER_URL}?site=tgju&t=${Date.now()}`, {cache:"no-store"}); 
     const data = await res.json(); 
     if(!data.price) throw new Error(data.error || "No price found"); 
-    setState(card, data.price, null); 
+    setState(card, data.price, "success"); 
   } catch(e){ 
-    setState(card, "Failed: open site directly", "error"); 
+    setState(card, "Failed: tap to open", "error"); 
     card.onclick = () => window.open(directLinks.tgju, "_blank"); 
   }
 }
@@ -34,14 +34,20 @@ document.querySelectorAll(".card").forEach(card => {
       checkTgju(); 
     } else { 
       const frameWrap = document.getElementById(`frame-${card.dataset.source}`);
-      frameWrap.classList.toggle("active");
+      const isActive = frameWrap.classList.toggle("active");
+      card.classList.toggle("active-card", isActive);
 
-      if(frameWrap.classList.contains("active")) {
-        setState(card, "Tap to close view", null);
+      if(isActive) {
+        setState(card, "Tap to close", "opened");
         const iframe = frameWrap.querySelector("iframe");
         if(!iframe.src) iframe.src = directLinks[card.dataset.source];
+
+        // Scroll to the card slightly for better view on iPhone
+        setTimeout(() => {
+          card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
       } else {
-        setState(card, "Tap to view site inside app", null);
+        setState(card, "Tap to view site", null);
       }
     } 
   }); 
@@ -53,7 +59,8 @@ document.getElementById("loadAllBtn").addEventListener("click", () => {
     const frameWrap = document.getElementById(`frame-${site}`);
     if(!frameWrap.classList.contains("active")) {
       frameWrap.classList.add("active");
-      setState(card, "Tap to close view", null);
+      card.classList.add("active-card");
+      setState(card, "Tap to close", "opened");
       const iframe = frameWrap.querySelector("iframe");
       if(!iframe.src) iframe.src = directLinks[site];
     }
