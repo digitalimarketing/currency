@@ -1,9 +1,9 @@
 const WORKER_URL = "https://currency.digitalimarketingchannel.workers.dev/";
 
 const directLinks = {
-  bonbast: "https://bonbast.com/",
-  bonbast2: "https://www.bon-bast.com/",
-  navasan: "https://www.navasan.net/",
+  bonbast: "https://bonbast.com/#:~:text=Euro/%20IRR",
+  bonbast2: "https://www.bon-bast.com/#:~:text=EUR",
+  navasan: "https://www.navasan.net/#:~:text=یورو",
   tgju: "https://www.tgju.org/currency",
 };
 
@@ -33,30 +33,17 @@ document.querySelectorAll(".card").forEach(card => {
     if(card.dataset.source === 'tgju') {
       checkTgju(); 
     } else { 
-      const frameWrap = document.getElementById(`frame-${card.dataset.source}`);
-      frameWrap.classList.toggle("active");
-
-      if(frameWrap.classList.contains("active")) {
-        setState(card, "Tap to close view", null);
-        const iframe = frameWrap.querySelector("iframe");
-        if(!iframe.src) iframe.src = directLinks[card.dataset.source];
-      } else {
-        setState(card, "Tap to view site inside app", null);
-      }
+      window.open(directLinks[card.dataset.source], "_blank");
+      setState(card, "Opened and highlighted", null);
     } 
   }); 
 });
 
 document.getElementById("loadAllBtn").addEventListener("click", () => {
+  let delay = 0;
   ["bonbast", "bonbast2", "navasan"].forEach(site => {
-    const card = document.querySelector(`[data-source="${site}"]`);
-    const frameWrap = document.getElementById(`frame-${site}`);
-    if(!frameWrap.classList.contains("active")) {
-      frameWrap.classList.add("active");
-      setState(card, "Tap to close view", null);
-      const iframe = frameWrap.querySelector("iframe");
-      if(!iframe.src) iframe.src = directLinks[site];
-    }
+    setTimeout(() => window.open(directLinks[site], "_blank"), delay);
+    delay += 800;
   });
 });
 
