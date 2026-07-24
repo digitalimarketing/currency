@@ -30,19 +30,24 @@ async function checkTgju(){
 
 document.querySelectorAll(".card").forEach(card => { 
   card.addEventListener("click", () => { 
-    if(card.dataset.source === 'tgju') {
+    const source = card.dataset.source;
+    if(source === 'tgju') {
       checkTgju(); 
+    } else if (source === 'bonbast') {
+      // Open Bonbast in a new tab to bypass cookie blocks
+      window.open(directLinks.bonbast, "_blank");
+      setState(card, "Opened in new tab", "opened");
     } else { 
-      const frameWrap = document.getElementById(`frame-${card.dataset.source}`);
+      // Open Bonbast2 and Navasan inside iframes
+      const frameWrap = document.getElementById(`frame-${source}`);
       const isActive = frameWrap.classList.toggle("active");
       card.classList.toggle("active-card", isActive);
 
       if(isActive) {
         setState(card, "Tap to close", "opened");
         const iframe = frameWrap.querySelector("iframe");
-        if(!iframe.src) iframe.src = directLinks[card.dataset.source];
+        if(!iframe.src) iframe.src = directLinks[source];
 
-        // Scroll to the card slightly for better view on iPhone
         setTimeout(() => {
           card.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 100);
@@ -54,7 +59,7 @@ document.querySelectorAll(".card").forEach(card => {
 });
 
 document.getElementById("loadAllBtn").addEventListener("click", () => {
-  ["bonbast", "bonbast2", "navasan"].forEach(site => {
+  ["bonbast2", "navasan"].forEach(site => {
     const card = document.querySelector(`[data-source="${site}"]`);
     const frameWrap = document.getElementById(`frame-${site}`);
     if(!frameWrap.classList.contains("active")) {
